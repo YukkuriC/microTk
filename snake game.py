@@ -7,9 +7,11 @@ def SNAKE():
     # update display
     def update_frame(frame):
         bitmap = Image()
-        bitmap.set_pixel(*SNAKE.head, 6)
-        for bodypart in SNAKE.body:
-            bitmap.set_pixel(*bodypart, 3)
+        for i in range(len(SNAKE.body)):
+            bodypart = SNAKE.body[i]
+            lightness = 7 - int(3 * (i + 1) / len(SNAKE.body))
+            bitmap.set_pixel(*bodypart, lightness)
+        bitmap.set_pixel(*SNAKE.head, 9)
         if frame // 5 == 0:
             bitmap.set_pixel(*SNAKE.pt, 9)
         display.show(bitmap)
@@ -57,10 +59,11 @@ def SNAKE():
 
     # end game
     def gameover_screen():
+        update_frame(0)
         for i in range(2):
-            display.set_pixel(*SNAKE.head,0)
+            display.set_pixel(*SNAKE.head, 0)
             sleep(100)
-            display.set_pixel(*SNAKE.head,9)
+            display.set_pixel(*SNAKE.head, 9)
             sleep(100)
         display.set_pixel(*SNAKE.pt, 0)
         while SNAKE.body:
