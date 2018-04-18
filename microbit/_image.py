@@ -1,4 +1,4 @@
-__all__ = ['Image', 'display']
+__all__ = ['Image', 'display', 'panic']
 
 from time import sleep as _sleep
 from turtle import Screen as _Screen
@@ -13,6 +13,13 @@ _cv = _screen.cv
 _cv.config(bg='black')
 
 
+# error code
+def panic(error_code=None):
+    if error_code == None:
+        error_code = Image.SAD
+    display.show(error_code, loop=True)
+
+
 # simulated LED class
 class _led:
     pool = [[None] * 5 for i in range(5)]
@@ -20,7 +27,8 @@ class _led:
     @staticmethod
     def _colortext(fr, to, val):
         return '#%02x%02x%02x' % tuple(
-            int(fr[i] + (to[i] - fr[i]) * val / 9) for i in range(3))
+            min(max(int(fr[i] + (to[i] - fr[i]) * val / 9), 0), 255)
+            for i in range(3))
 
     def __init__(self, x, y):
         _led.pool[x][y] = self
@@ -30,14 +38,14 @@ class _led:
             center[1] - 45,
             center[0] + 45,
             center[1] + 45,
-            fill='#323232',
+            fill='#%02x%02x%02x' % (10, 15, 10),
             outline='')
         self.inner = _cv.create_rectangle(
             center[0] - 35,
             center[1] - 35,
             center[0] + 35,
             center[1] + 35,
-            fill='black',
+            fill='#%02x%02x%02x' % (0, 0, 0),
             outline='')
         self.level = 0
 
@@ -45,13 +53,15 @@ class _led:
         self.level = int(max(0, (min(9, level))))
         _cv.itemconfig(
             self.inner,
-            fill=_led._colortext((20, 20, 20), (255, 100, 100), self.level))
+            fill=_led._colortext((0, 0, 0), (750, 140, 120),
+                                 self.level))  # fake HDR
         _cv.itemconfig(
             self.outer,
-            fill=_led._colortext((10, 10, 10), (200, 30, 30), self.level))
+            fill=_led._colortext((10, 15, 10), (255, 30, 30), self.level))
 
 
 class display:
+
     # background thread
     # wait=False implement
     # TODO
@@ -85,7 +95,7 @@ class display:
     # get lightness level of certain pixel
     @staticmethod
     def get_pixel(x, y):
-        return _led.pool[x][y].lightness
+        return _led.pool[x][y].level
 
     # set lightness level of certain pixel
     @staticmethod
@@ -120,23 +130,27 @@ class display:
         if isinstance(item, Image):
             # small image
             if item._width <= 5:
-                display._show_image(item, delay or 0, loop, clear)
+                display._show_image(item, delay or 0, loop)
 
             # long image splitted into list
             # TODO
             else:
                 pass
         elif isinstance(item, list) or isinstance(item, tuple):
-            display._show_sequence(item, delay or 400, loop, clear)
+            display._show_sequence(item, delay or 400, loop)
         elif isinstance(item, int) or isinstance(item, float) or isinstance(
                 item, str):
-            scroll(str(item), delay=delay or 150, **kwargs)
+            display.scroll(str(item), delay=delay or 150, **kwargs)
         else:
             panic()
 
+        # clear if needed
+        if clear:
+            display.clear()
+
     # show an image (first 5 columns)
     @staticmethod
-    def _show_image(item, delay, loop, clear):
+    def _show_image(item, delay, loop):
         # enter loop for once/forever
         while True:
             # clear first
@@ -158,27 +172,27 @@ class display:
             if not loop:
                 break
 
-        # clear afterwards
-        if clear:
-            display.clear()
-
     # show the character's font
     @staticmethod
     def _show_char(string, delay, loop):
         char_img = _font.get(string, _font['?'])
-        display._show_image(char_img, delay, loop, False)
+        display._show_image(char_img, delay, loop)
 
     # show a sequence of iterables
     @staticmethod
-    def _show_sequence(lst, delay, loop, clear):
+    def _show_sequence(lst, delay, loop):
         # enter loop for once/forever
         while 1:
             # show each item
             for item in lst:
                 if isinstance(item, Image):
-                    display._show_image(item, delay, False, False)
+                    display._show_image(item, delay, False)
                 elif isinstance(item, str):
                     display.scroll(item, 150)
+
+            # if not loop, then break
+            if not loop:
+                break
 
     @staticmethod
     def scroll(string, delay=150,
@@ -202,20 +216,16 @@ class display:
             img_start = Image()
             for i in string:
                 if not monospace:
-                    img_start += Image(1, 5)
-                img_start += _font.get(i, _font['?'])
+                    img_start = img_start._join(Image(1, 5))
+                img_start = img_start._join(_font.get(i, _font['?']))
 
             # scroll string image
             while img_start._width:
-                # draw current image
-                display._show_image(img_start, delay, False, False)
+                # draw current image & delay
+                display._show_image(img_start, delay, False)
 
                 # scroll 1 block
                 img_start = img_start.shift_left(1)
-
-                # delay
-                if delay > 0:
-                    _sleep(delay / 1000)
 
             # break if not in loop
             if not loop:
@@ -223,7 +233,8 @@ class display:
 
 
 class Image:
-    # compile ascii font strings into Images
+
+    # compile ascii font strings into Image
     @staticmethod
     def _init_font():
         for chr in _font:
@@ -231,20 +242,18 @@ class Image:
 
     # compile inner images
     @staticmethod
-    def _init_image():
-        # compile images
-        for img in _images:
-            exec("Image.%s=Image(_images[img])" % img)
+    def _inner_image(s):
+        img = Image(s)
+        for fun in ['set_pixel', 'fill', 'blit']:
+            img.__setattr__(fun, Image._inner_attempt_modify)
 
-        # generate image lists
-        Image.ALL_CLOCKS = [eval('Image.CLOCK%d' % i) for i in range(1, 13)]
-        Image.ALL_ARROWS = [
-            eval('Image.ARROW_%s' % i)
-            for i in ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        ]
+        return img
+
+    # try to modify inner images
+    def _inner_attempt_modify(self, *args, **kwargs):
+        panic()
 
     def __init__(self, *args):  # ._data format as lightness[x][y]
-        self._readonly = False
         # empty 5x5
         if len(args) == 0:
             self._width = self._height = 5
@@ -268,6 +277,11 @@ class Image:
                 for i in range(min(len(s), self._width * self._height)):
                     self._data[i % self._width][i // self._width] = int(s[i])
 
+    def fill(self, value):
+        for x in range(self._width):
+            for y in range(self._height):
+                self._data[x][y] = value
+
     def width(self):
         return self._width
 
@@ -280,11 +294,32 @@ class Image:
         new_image._width = self._width
         return new_image
 
+    def invert(self):
+        new_image = self.copy()
+        for x in range(new_image._width):
+            for y in range(new_image._height):
+                new_image._data[x][y] = 9 - new_image._data[x][y]
+        return new_image
+
     def set_pixel(self, x, y, value):
         self._data[x][y] = value
 
     def get_pixel(self, x, y):
         return self._data[x][y]
+
+    def blit(self, src, x, y, w, h, xdest=0, ydest=0):
+        for cx in range(min(w, self._width - xdest)):
+            for cy in range(min(h, self._height - ydest)):
+                if x + cx >= src._width or y + cy >= src._height:
+                    l = 0
+                else:
+                    l = src._data[x + cx][y + cy]
+                self._data[xdest + cx][ydest + cy] = l
+
+    def crop(self, x, y, w, h):
+        new_img = Image(w, h)
+        new_img.blit(self, x, y, w, h)
+        return new_img
 
     def shift_left(self, n):
         if n < 0:
@@ -318,6 +353,14 @@ class Image:
         new_image._height = max(self._height - n, 0)
         return new_image
 
+    def _join(self, other):  # on right
+        if self._height != other._height:
+            panic()
+        new_image = self.copy()
+        new_image._data.extend(x.copy() for x in other._data)
+        new_image._width += other._width
+        return new_image
+
     def __repr__(self):
         return ':'.join(''.join(
             str(self._data[x][y]) for x in range(self._width))
@@ -329,13 +372,94 @@ class Image:
                          for y in range(self._height))
 
     def __add__(self, other):
-        if self._height != other._height:
-            panic()
-        new_image = self.copy()
-        new_image._data.extend(x.copy() for x in other._data)
-        new_image._width += other._width
-        return new_image
+        res = Image(
+            max(self._width, other._width), max(self._height, other._height))
+        for x in range(self._width):
+            for y in range(self._height):
+                res[x][y] = self[x][y]
+        for x in range(other._width):
+            for y in range(other._height):
+                res[x][y] = min(res[x][y] + other[x][y], 9)
+        return res
 
+    def __mul__(self, n):
+        res = Image(self._width, self._height)
+        for x in range(self._width):
+            for y in range(self._height):
+                res[x][y] = min(self[x][y] * n, 9)
+        return res
+
+
+# all static images
+if 1:
+    Image.HEART = Image._inner_image('01010:11111:11111:01110:00100:')
+    Image.HEART_SMALL = Image._inner_image('00000:01010:01110:00100:00000:')
+    Image.HAPPY = Image._inner_image('00000:01010:00000:10001:01110:')
+    Image.SMILE = Image._inner_image('00000:00000:00000:10001:01110:')
+    Image.SAD = Image._inner_image('00000:01010:00000:01110:10001:')
+    Image.CONFUSED = Image._inner_image('00000:01010:00000:01010:10101:')
+    Image.ANGRY = Image._inner_image('10001:01010:00000:11111:10101:')
+    Image.ASLEEP = Image._inner_image('00000:11011:00000:01110:00000:')
+    Image.SURPRISED = Image._inner_image('01010:00000:00100:01010:00100:')
+    Image.SILLY = Image._inner_image('10001:00000:11111:00101:00111:')
+    Image.FABULOUS = Image._inner_image('11111:11011:00000:01010:01110:')
+    Image.MEH = Image._inner_image('01010:00000:00010:00100:01000:')
+    Image.YES = Image._inner_image('00000:00001:00010:10100:01000:')
+    Image.NO = Image._inner_image('10001:01010:00100:01010:10001:')
+    Image.CLOCK12 = Image._inner_image('00100:00100:00100:00000:00000:')
+    Image.CLOCK1 = Image._inner_image('00010:00010:00100:00000:00000:')
+    Image.CLOCK2 = Image._inner_image('00000:00011:00100:00000:00000:')
+    Image.CLOCK3 = Image._inner_image('00000:00000:00111:00000:00000:')
+    Image.CLOCK4 = Image._inner_image('00000:00000:00100:00011:00000:')
+    Image.CLOCK5 = Image._inner_image('00000:00000:00100:00010:00010:')
+    Image.CLOCK6 = Image._inner_image('00000:00000:00100:00100:00100:')
+    Image.CLOCK7 = Image._inner_image('00000:00000:00100:01000:01000:')
+    Image.CLOCK8 = Image._inner_image('00000:00000:00100:11000:00000:')
+    Image.CLOCK9 = Image._inner_image('00000:00000:11100:00000:00000:')
+    Image.CLOCK10 = Image._inner_image('00000:11000:00100:00000:00000:')
+    Image.CLOCK11 = Image._inner_image('01000:01000:00100:00000:00000:')
+    Image.ARROW_N = Image._inner_image('00100:01110:10101:00100:00100:')
+    Image.ARROW_NE = Image._inner_image('00111:00011:00101:01000:10000:')
+    Image.ARROW_E = Image._inner_image('00100:00010:11111:00010:00100:')
+    Image.ARROW_SE = Image._inner_image('10000:01000:00101:00011:00111:')
+    Image.ARROW_S = Image._inner_image('00100:00100:10101:01110:00100:')
+    Image.ARROW_SW = Image._inner_image('00001:00010:10100:11000:11100:')
+    Image.ARROW_W = Image._inner_image('00100:01000:11111:01000:00100:')
+    Image.ARROW_NW = Image._inner_image('11100:11000:10100:00010:00001:')
+    Image.TRIANGLE = Image._inner_image('00000:00100:01010:11111:00000:')
+    Image.TRIANGLE_LEFT = Image._inner_image('10000:11000:10100:10010:11111:')
+    Image.CHESSBOARD = Image._inner_image('01010:10101:01010:10101:01010:')
+    Image.DIAMOND = Image._inner_image('00100:01010:10001:01010:00100:')
+    Image.DIAMOND_SMALL = Image._inner_image('00000:00100:01010:00100:00000:')
+    Image.SQUARE = Image._inner_image('11111:10001:10001:10001:11111:')
+    Image.SQUARE_SMALL = Image._inner_image('00000:01110:01010:01110:00000:')
+    Image.RABBIT = Image._inner_image('10100:10100:11110:11010:11110:')
+    Image.COW = Image._inner_image('10001:10001:11111:01110:00100:')
+    Image.MUSIC_CROTCHET = Image._inner_image('00100:00100:00100:11100:11100:')
+    Image.MUSIC_QUAVER = Image._inner_image('00100:00110:00101:11100:11100:')
+    Image.MUSIC_QUAVERS = Image._inner_image('01111:01001:01001:11011:11011:')
+    Image.PITCHFORK = Image._inner_image('10101:10101:11111:00100:00100:')
+    Image.XMAS = Image._inner_image('00100:01110:00100:01110:11111:')
+    Image.PACMAN = Image._inner_image('01111:11010:11100:11110:01111:')
+    Image.TARGET = Image._inner_image('00100:01110:11011:01110:00100:')
+    Image.TSHIRT = Image._inner_image('11011:11111:01110:01110:01110:')
+    Image.ROLLERSKATE = Image._inner_image('00011:00011:11111:11111:01010:')
+    Image.DUCK = Image._inner_image('01100:11100:01111:01110:00000:')
+    Image.HOUSE = Image._inner_image('00100:01110:11111:01110:01010:')
+    Image.TORTOISE = Image._inner_image('00000:01110:11111:01010:00000:')
+    Image.BUTTERFLY = Image._inner_image('11011:11111:00100:11111:11011:')
+    Image.STICKFIGURE = Image._inner_image('00100:11111:00100:01010:10001:')
+    Image.GHOST = Image._inner_image('11111:10101:11111:11111:10101:')
+    Image.SWORD = Image._inner_image('00100:00100:00100:01110:00100:')
+    Image.GIRAFFE = Image._inner_image('11000:01000:01000:01110:01010:')
+    Image.SKULL = Image._inner_image('01110:10101:11111:01110:01110:')
+    Image.UMBRELLA = Image._inner_image('01110:11111:00100:10100:01100:')
+    Image.SNAKE = Image._inner_image('11000:11011:01010:01110:00000:')
+    Image.ALL_CLOCKS = [eval('Image.CLOCK%d' % i) for i in range(1, 13)]
+    Image.ALL_ARROWS = [
+        eval('Image.ARROW_%s' % i)
+        for i in ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+    ]
 
 # ascii font before compiled into Image
 _font = {
@@ -436,75 +560,7 @@ _font = {
     '~': '00000:00000:09900:00099:00000'
 }
 
-# all custom images before compiled
-_images = {
-    'HEART': '09090:99999:99999:09990:00900:',
-    'HEART_SMALL': '00000:09090:09990:00900:00000:',
-    'HAPPY': '00000:09090:00000:90009:09990:',
-    'SMILE': '00000:00000:00000:90009:09990:',
-    'SAD': '00000:09090:00000:09990:90009:',
-    'CONFUSED': '00000:09090:00000:09090:90909:',
-    'ANGRY': '90009:09090:00000:99999:90909:',
-    'ASLEEP': '00000:99099:00000:09990:00000:',
-    'SURPRISED': '09090:00000:00900:09090:00900:',
-    'SILLY': '90009:00000:99999:00909:00999:',
-    'FABULOUS': '99999:99099:00000:09090:09990:',
-    'MEH': '09090:00000:00090:00900:09000:',
-    'YES': '00000:00009:00090:90900:09000:',
-    'NO': '90009:09090:00900:09090:90009:',
-    'CLOCK12': '00900:00900:00900:00000:00000:',
-    'CLOCK1': '00090:00090:00900:00000:00000:',
-    'CLOCK2': '00000:00099:00900:00000:00000:',
-    'CLOCK3': '00000:00000:00999:00000:00000:',
-    'CLOCK4': '00000:00000:00900:00099:00000:',
-    'CLOCK5': '00000:00000:00900:00090:00090:',
-    'CLOCK6': '00000:00000:00900:00900:00900:',
-    'CLOCK7': '00000:00000:00900:09000:09000:',
-    'CLOCK8': '00000:00000:00900:99000:00000:',
-    'CLOCK9': '00000:00000:99900:00000:00000:',
-    'CLOCK10': '00000:99000:00900:00000:00000:',
-    'CLOCK11': '09000:09000:00900:00000:00000:',
-    'ARROW_N': '00900:09990:90909:00900:00900:',
-    'ARROW_NE': '00999:00099:00909:09000:90000:',
-    'ARROW_E': '00900:00090:99999:00090:00900:',
-    'ARROW_SE': '90000:09000:00909:00099:00999:',
-    'ARROW_S': '00900:00900:90909:09990:00900:',
-    'ARROW_SW': '00009:00090:90900:99000:99900:',
-    'ARROW_W': '00900:09000:99999:09000:00900:',
-    'ARROW_NW': '99900:99000:90900:00090:00009:',
-    'TRIANGLE': '00000:00900:09090:99999:00000:',
-    'TRIANGLE_LEFT': '90000:99000:90900:90090:99999:',
-    'CHESSBOARD': '09090:90909:09090:90909:09090:',
-    'DIAMOND': '00900:09090:90009:09090:00900:',
-    'DIAMOND_SMALL': '00000:00900:09090:00900:00000:',
-    'SQUARE': '99999:90009:90009:90009:99999:',
-    'SQUARE_SMALL': '00000:09990:09090:09990:00000:',
-    'RABBIT': '90900:90900:99990:99090:99990:',
-    'COW': '90009:90009:99999:09990:00900:',
-    'MUSIC_CROTCHET': '00900:00900:00900:99900:99900:',
-    'MUSIC_QUAVER': '00900:00990:00909:99900:99900:',
-    'MUSIC_QUAVERS': '09999:09009:09009:99099:99099:',
-    'PITCHFORK': '90909:90909:99999:00900:00900:',
-    'XMAS': '00900:09990:00900:09990:99999:',
-    'PACMAN': '09999:99090:99900:99990:09999:',
-    'TARGET': '00900:09990:99099:09990:00900:',
-    'TSHIRT': '99099:99999:09990:09990:09990:',
-    'ROLLERSKATE': '00099:00099:99999:99999:09090:',
-    'DUCK': '09900:99900:09999:09990:00000:',
-    'HOUSE': '00900:09990:99999:09990:09090:',
-    'TORTOISE': '00000:09990:99999:09090:00000:',
-    'BUTTERFLY': '99099:99999:00900:99999:99099:',
-    'STICKFIGURE': '00900:99999:00900:09090:90009:',
-    'GHOST': '99999:90909:99999:99999:90909:',
-    'SWORD': '00900:00900:00900:09990:00900:',
-    'GIRAFFE': '99000:09000:09000:09990:09090:',
-    'SKULL': '09990:90909:99999:09990:09990:',
-    'UMBRELLA': '09990:99999:00900:90900:09900:',
-    'SNAKE': '99000:99099:09090:09990:00000:'
-}
-
 # ============ post-import ============
 
 display._init_led()
 Image._init_font()
-Image._init_image()

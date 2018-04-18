@@ -20,12 +20,6 @@ def running_time():
     return (_time() - _init_time) * 1000
 
 
-def panic(error_code=None):
-    if error_code == None:
-        error_code = Image('90009:09090:00900:09090:90009')
-    display.show(error_code, delay=500, loop=True)
-
-
 # ============ button input ============
 class _button:
     def _press(self, event):
