@@ -4,13 +4,21 @@ BBC micro:bit simulator (MicroPython interpreter) with tkinter canvas
 
 ## TODO:
 
-2. display
-> 2.1. implement of wait=False argument
-> * a.k.a. multi-thread
+1. display
+> * implement of wait=False argument
+> * * a.k.a. multi-thread
 
-3. accelerometer
+2. accelerometer
 
-4. music, audio, etc.
+3. music, audio, etc.
+
+## Alpha 0.0.3
+
+### Change log:
+* code structure refactor
+
+* display
+> * auto cut long image into list
 
 
 ## Alpha 0.0.2
