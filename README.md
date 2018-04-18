@@ -1,2 +1,2 @@
 # microTk
-Micro:bit python interpreter on Windows with tkinter canvas
+BBC micro:bit MicroPython interpreter on Windows with tkinter canvas
