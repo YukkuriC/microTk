@@ -1,8 +1,8 @@
 __all__ = ['Image', 'display', 'panic']
 
-from time import sleep as _sleep
 from turtle import Screen as _Screen
 from threading import Thread as _Thread
+from ._base import sleep as _sleep
 
 # initialize screen and canvas
 _screen = _Screen()
@@ -133,9 +133,12 @@ class display:
                 display._show_image(item, delay or 0, loop)
 
             # long image splitted into list
-            # TODO
             else:
-                pass
+                list_cut = [
+                    item.crop(i, 0, 5, item._height)
+                    for i in range(0, item._width, 5)
+                ]
+                display._show_sequence(list_cut, delay, loop)
         elif isinstance(item, list) or isinstance(item, tuple):
             display._show_sequence(item, delay or 400, loop)
         elif isinstance(item, int) or isinstance(item, float) or isinstance(
@@ -166,7 +169,7 @@ class display:
 
             # delay between frames
             if delay:
-                _sleep(delay / 1000)
+                _sleep(delay)
 
             # if not loop, then break
             if not loop:
