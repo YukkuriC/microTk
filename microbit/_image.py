@@ -376,17 +376,17 @@ class Image:
             max(self._width, other._width), max(self._height, other._height))
         for x in range(self._width):
             for y in range(self._height):
-                res[x][y] = self[x][y]
+                res._data[x][y] = self._data[x][y]
         for x in range(other._width):
             for y in range(other._height):
-                res[x][y] = min(res[x][y] + other[x][y], 9)
+                res._data[x][y] = min(res._data[x][y] + other._data[x][y], 9)
         return res
 
     def __mul__(self, n):
         res = Image(self._width, self._height)
         for x in range(self._width):
             for y in range(self._height):
-                res[x][y] = min(self._data[x][y] * n, 9)
+                res._data[x][y] = min(self._data[x][y] * n, 9)
         return res
 
 
