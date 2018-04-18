@@ -50,7 +50,7 @@ class _led:
         self.level = 0
 
     def set_lightness(self, level):
-        self.level = int(max(0, (min(9, level))))
+        self.level = max(0, (min(9, level)))
         _cv.itemconfig(
             self.inner,
             fill=_led._colortext((0, 0, 0), (750, 140, 120),
@@ -313,10 +313,10 @@ class Image:
     def blit(self, src, x, y, w, h, xdest=0, ydest=0):
         for cx in range(min(w, self._width - xdest)):
             for cy in range(min(h, self._height - ydest)):
-                if x + cx >= src._width or y + cy >= src._height:
-                    l = 0
-                else:
+                if 0 <= x + cx < src._width and 0 <= y + cy < src._height:
                     l = src._data[x + cx][y + cy]
+                else:
+                    l = 0
                 self._data[xdest + cx][ydest + cy] = l
 
     def crop(self, x, y, w, h):
@@ -385,79 +385,90 @@ class Image:
                 res._data[x][y] = min(res._data[x][y] + other._data[x][y], 9)
         return res
 
+    def __sub__(self, other):
+        res = Image(
+            max(self._width, other._width), max(self._height, other._height))
+        for x in range(self._width):
+            for y in range(self._height):
+                res._data[x][y] = self._data[x][y]
+        for x in range(other._width):
+            for y in range(other._height):
+                res._data[x][y] = max(res._data[x][y] - other._data[x][y], 0)
+        return res
+
     def __mul__(self, n):
         res = Image(self._width, self._height)
         for x in range(self._width):
             for y in range(self._height):
-                res._data[x][y] = min(self._data[x][y] * n, 9)
+                res._data[x][y] = max(0, min(self._data[x][y] * n, 9))
         return res
 
 
 # all static images
 if 1:
-    Image.HEART = Image._inner_image('01010:11111:11111:01110:00100:')
-    Image.HEART_SMALL = Image._inner_image('00000:01010:01110:00100:00000:')
-    Image.HAPPY = Image._inner_image('00000:01010:00000:10001:01110:')
-    Image.SMILE = Image._inner_image('00000:00000:00000:10001:01110:')
-    Image.SAD = Image._inner_image('00000:01010:00000:01110:10001:')
-    Image.CONFUSED = Image._inner_image('00000:01010:00000:01010:10101:')
-    Image.ANGRY = Image._inner_image('10001:01010:00000:11111:10101:')
-    Image.ASLEEP = Image._inner_image('00000:11011:00000:01110:00000:')
-    Image.SURPRISED = Image._inner_image('01010:00000:00100:01010:00100:')
-    Image.SILLY = Image._inner_image('10001:00000:11111:00101:00111:')
-    Image.FABULOUS = Image._inner_image('11111:11011:00000:01010:01110:')
-    Image.MEH = Image._inner_image('01010:00000:00010:00100:01000:')
-    Image.YES = Image._inner_image('00000:00001:00010:10100:01000:')
-    Image.NO = Image._inner_image('10001:01010:00100:01010:10001:')
-    Image.CLOCK12 = Image._inner_image('00100:00100:00100:00000:00000:')
-    Image.CLOCK1 = Image._inner_image('00010:00010:00100:00000:00000:')
-    Image.CLOCK2 = Image._inner_image('00000:00011:00100:00000:00000:')
-    Image.CLOCK3 = Image._inner_image('00000:00000:00111:00000:00000:')
-    Image.CLOCK4 = Image._inner_image('00000:00000:00100:00011:00000:')
-    Image.CLOCK5 = Image._inner_image('00000:00000:00100:00010:00010:')
-    Image.CLOCK6 = Image._inner_image('00000:00000:00100:00100:00100:')
-    Image.CLOCK7 = Image._inner_image('00000:00000:00100:01000:01000:')
-    Image.CLOCK8 = Image._inner_image('00000:00000:00100:11000:00000:')
-    Image.CLOCK9 = Image._inner_image('00000:00000:11100:00000:00000:')
-    Image.CLOCK10 = Image._inner_image('00000:11000:00100:00000:00000:')
-    Image.CLOCK11 = Image._inner_image('01000:01000:00100:00000:00000:')
-    Image.ARROW_N = Image._inner_image('00100:01110:10101:00100:00100:')
-    Image.ARROW_NE = Image._inner_image('00111:00011:00101:01000:10000:')
-    Image.ARROW_E = Image._inner_image('00100:00010:11111:00010:00100:')
-    Image.ARROW_SE = Image._inner_image('10000:01000:00101:00011:00111:')
-    Image.ARROW_S = Image._inner_image('00100:00100:10101:01110:00100:')
-    Image.ARROW_SW = Image._inner_image('00001:00010:10100:11000:11100:')
-    Image.ARROW_W = Image._inner_image('00100:01000:11111:01000:00100:')
-    Image.ARROW_NW = Image._inner_image('11100:11000:10100:00010:00001:')
-    Image.TRIANGLE = Image._inner_image('00000:00100:01010:11111:00000:')
-    Image.TRIANGLE_LEFT = Image._inner_image('10000:11000:10100:10010:11111:')
-    Image.CHESSBOARD = Image._inner_image('01010:10101:01010:10101:01010:')
-    Image.DIAMOND = Image._inner_image('00100:01010:10001:01010:00100:')
-    Image.DIAMOND_SMALL = Image._inner_image('00000:00100:01010:00100:00000:')
-    Image.SQUARE = Image._inner_image('11111:10001:10001:10001:11111:')
-    Image.SQUARE_SMALL = Image._inner_image('00000:01110:01010:01110:00000:')
-    Image.RABBIT = Image._inner_image('10100:10100:11110:11010:11110:')
-    Image.COW = Image._inner_image('10001:10001:11111:01110:00100:')
-    Image.MUSIC_CROTCHET = Image._inner_image('00100:00100:00100:11100:11100:')
-    Image.MUSIC_QUAVER = Image._inner_image('00100:00110:00101:11100:11100:')
-    Image.MUSIC_QUAVERS = Image._inner_image('01111:01001:01001:11011:11011:')
-    Image.PITCHFORK = Image._inner_image('10101:10101:11111:00100:00100:')
-    Image.XMAS = Image._inner_image('00100:01110:00100:01110:11111:')
-    Image.PACMAN = Image._inner_image('01111:11010:11100:11110:01111:')
-    Image.TARGET = Image._inner_image('00100:01110:11011:01110:00100:')
-    Image.TSHIRT = Image._inner_image('11011:11111:01110:01110:01110:')
-    Image.ROLLERSKATE = Image._inner_image('00011:00011:11111:11111:01010:')
-    Image.DUCK = Image._inner_image('01100:11100:01111:01110:00000:')
-    Image.HOUSE = Image._inner_image('00100:01110:11111:01110:01010:')
-    Image.TORTOISE = Image._inner_image('00000:01110:11111:01010:00000:')
-    Image.BUTTERFLY = Image._inner_image('11011:11111:00100:11111:11011:')
-    Image.STICKFIGURE = Image._inner_image('00100:11111:00100:01010:10001:')
-    Image.GHOST = Image._inner_image('11111:10101:11111:11111:10101:')
-    Image.SWORD = Image._inner_image('00100:00100:00100:01110:00100:')
-    Image.GIRAFFE = Image._inner_image('11000:01000:01000:01110:01010:')
-    Image.SKULL = Image._inner_image('01110:10101:11111:01110:01110:')
-    Image.UMBRELLA = Image._inner_image('01110:11111:00100:10100:01100:')
-    Image.SNAKE = Image._inner_image('11000:11011:01010:01110:00000:')
+    Image.HEART = Image._inner_image('09090:99999:99999:09990:00900:')
+    Image.HEART_SMALL = Image._inner_image('00000:09090:09990:00900:00000:')
+    Image.HAPPY = Image._inner_image('00000:09090:00000:90009:09990:')
+    Image.SMILE = Image._inner_image('00000:00000:00000:90009:09990:')
+    Image.SAD = Image._inner_image('00000:09090:00000:09990:90009:')
+    Image.CONFUSED = Image._inner_image('00000:09090:00000:09090:90909:')
+    Image.ANGRY = Image._inner_image('90009:09090:00000:99999:90909:')
+    Image.ASLEEP = Image._inner_image('00000:99099:00000:09990:00000:')
+    Image.SURPRISED = Image._inner_image('09090:00000:00900:09090:00900:')
+    Image.SILLY = Image._inner_image('90009:00000:99999:00909:00999:')
+    Image.FABULOUS = Image._inner_image('99999:99099:00000:09090:09990:')
+    Image.MEH = Image._inner_image('09090:00000:00090:00900:09000:')
+    Image.YES = Image._inner_image('00000:00009:00090:90900:09000:')
+    Image.NO = Image._inner_image('90009:09090:00900:09090:90009:')
+    Image.CLOCK12 = Image._inner_image('00900:00900:00900:00000:00000:')
+    Image.CLOCK1 = Image._inner_image('00090:00090:00900:00000:00000:')
+    Image.CLOCK2 = Image._inner_image('00000:00099:00900:00000:00000:')
+    Image.CLOCK3 = Image._inner_image('00000:00000:00999:00000:00000:')
+    Image.CLOCK4 = Image._inner_image('00000:00000:00900:00099:00000:')
+    Image.CLOCK5 = Image._inner_image('00000:00000:00900:00090:00090:')
+    Image.CLOCK6 = Image._inner_image('00000:00000:00900:00900:00900:')
+    Image.CLOCK7 = Image._inner_image('00000:00000:00900:09000:09000:')
+    Image.CLOCK8 = Image._inner_image('00000:00000:00900:99000:00000:')
+    Image.CLOCK9 = Image._inner_image('00000:00000:99900:00000:00000:')
+    Image.CLOCK10 = Image._inner_image('00000:99000:00900:00000:00000:')
+    Image.CLOCK11 = Image._inner_image('09000:09000:00900:00000:00000:')
+    Image.ARROW_N = Image._inner_image('00900:09990:90909:00900:00900:')
+    Image.ARROW_NE = Image._inner_image('00999:00099:00909:09000:90000:')
+    Image.ARROW_E = Image._inner_image('00900:00090:99999:00090:00900:')
+    Image.ARROW_SE = Image._inner_image('90000:09000:00909:00099:00999:')
+    Image.ARROW_S = Image._inner_image('00900:00900:90909:09990:00900:')
+    Image.ARROW_SW = Image._inner_image('00009:00090:90900:99000:99900:')
+    Image.ARROW_W = Image._inner_image('00900:09000:99999:09000:00900:')
+    Image.ARROW_NW = Image._inner_image('99900:99000:90900:00090:00009:')
+    Image.TRIANGLE = Image._inner_image('00000:00900:09090:99999:00000:')
+    Image.TRIANGLE_LEFT = Image._inner_image('90000:99000:90900:90090:99999:')
+    Image.CHESSBOARD = Image._inner_image('09090:90909:09090:90909:09090:')
+    Image.DIAMOND = Image._inner_image('00900:09090:90009:09090:00900:')
+    Image.DIAMOND_SMALL = Image._inner_image('00000:00900:09090:00900:00000:')
+    Image.SQUARE = Image._inner_image('99999:90009:90009:90009:99999:')
+    Image.SQUARE_SMALL = Image._inner_image('00000:09990:09090:09990:00000:')
+    Image.RABBIT = Image._inner_image('90900:90900:99990:99090:99990:')
+    Image.COW = Image._inner_image('90009:90009:99999:09990:00900:')
+    Image.MUSIC_CROTCHET = Image._inner_image('00900:00900:00900:99900:99900:')
+    Image.MUSIC_QUAVER = Image._inner_image('00900:00990:00909:99900:99900:')
+    Image.MUSIC_QUAVERS = Image._inner_image('09999:09009:09009:99099:99099:')
+    Image.PITCHFORK = Image._inner_image('90909:90909:99999:00900:00900:')
+    Image.XMAS = Image._inner_image('00900:09990:00900:09990:99999:')
+    Image.PACMAN = Image._inner_image('09999:99090:99900:99990:09999:')
+    Image.TARGET = Image._inner_image('00900:09990:99099:09990:00900:')
+    Image.TSHIRT = Image._inner_image('99099:99999:09990:09990:09990:')
+    Image.ROLLERSKATE = Image._inner_image('00099:00099:99999:99999:09090:')
+    Image.DUCK = Image._inner_image('09900:99900:09999:09990:00000:')
+    Image.HOUSE = Image._inner_image('00900:09990:99999:09990:09090:')
+    Image.TORTOISE = Image._inner_image('00000:09990:99999:09090:00000:')
+    Image.BUTTERFLY = Image._inner_image('99099:99999:00900:99999:99099:')
+    Image.STICKFIGURE = Image._inner_image('00900:99999:00900:09090:90009:')
+    Image.GHOST = Image._inner_image('99999:90909:99999:99999:90909:')
+    Image.SWORD = Image._inner_image('00900:00900:00900:09990:00900:')
+    Image.GIRAFFE = Image._inner_image('99000:09000:09000:09990:09090:')
+    Image.SKULL = Image._inner_image('09990:90909:99999:09990:09990:')
+    Image.UMBRELLA = Image._inner_image('09990:99999:00900:90900:09900:')
+    Image.SNAKE = Image._inner_image('99000:99099:09090:09990:00000:')
     Image.ALL_CLOCKS = [eval('Image.CLOCK%d' % i) for i in range(1, 13)]
     Image.ALL_ARROWS = [
         eval('Image.ARROW_%s' % i)
