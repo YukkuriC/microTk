@@ -386,7 +386,7 @@ class Image:
         res = Image(self._width, self._height)
         for x in range(self._width):
             for y in range(self._height):
-                res[x][y] = min(self[x][y] * n, 9)
+                res[x][y] = min(self._data[x][y] * n, 9)
         return res
 
 
