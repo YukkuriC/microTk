@@ -138,7 +138,7 @@ class display:
                     item.crop(i, 0, 5, item._height)
                     for i in range(0, item._width, 5)
                 ]
-                display._show_sequence(list_cut, delay, loop)
+                display._show_sequence(list_cut, delay or 400, loop)
         elif isinstance(item, list) or isinstance(item, tuple):
             display._show_sequence(item, delay or 400, loop)
         elif isinstance(item, int) or isinstance(item, float) or isinstance(
