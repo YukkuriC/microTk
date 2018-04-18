@@ -10,17 +10,17 @@ BBC micro:bit MicroPython interpreter on Windows with tkinter canvas
 
 ### TODO:
 
-1. Image
-> 1.1. advanced functions
-> * crop
-> * blit
-> * etc.
-> 1.2. all operation functions implement with blit
+#### 1. Image
+> ##### 1.1. advanced functions
+> > crop
+> > blit
+> > etc.
+> ##### 1.2. all operation functions implement with blit
 
-2. display
-> 2.1. implement of wait=False argument
+#### 2. display
+> ##### 2.1. implement of wait=False argument
 > * a.k.a. multi-thread
 
-3. accelerometer
+#### 3. accelerometer
 
-4. music, audio, etc.
+#### 4. music, audio, etc.
