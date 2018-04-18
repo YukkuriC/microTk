@@ -3,6 +3,7 @@ from random import randint
 
 display.show('TEST', 50, monospace=True)
 display.scroll('img', 100)
+display.show(Image('0123456789876543210\n'*5))
 while 1:
     img = Image('01234:56789:98765:43210:13579')
     stamp = Image(3, 3)
