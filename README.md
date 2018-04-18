@@ -19,6 +19,10 @@ BBC micro:bit simulator (MicroPython interpreter) with tkinter canvas
 
 * display
 > * auto cut long image into list
+> * re-support float LED lightness
+
+* image
+> * defination of __sub__ operator
 
 
 ## Alpha 0.0.2
