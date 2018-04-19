@@ -12,6 +12,18 @@ BBC micro:bit simulator (MicroPython interpreter) with tkinter canvas
 
 3. music, audio, etc.
 
+***
+
+## Alpha 0.0.4
+### Change log:
+* separate main widget into a standalone thread
+
+* simple '\_\_doc__' for codes
+
+* information bar (temporarily) at bottom
+
+***
+
 ## Alpha 0.0.3
 
 ### Change log:
@@ -22,8 +34,9 @@ BBC micro:bit simulator (MicroPython interpreter) with tkinter canvas
 > * re-support float LED lightness
 
 * image
-> * defination of __sub__ operator
+> * defination of \_\_sub__ operator
 
+***
 
 ## Alpha 0.0.2
 
@@ -41,6 +54,7 @@ BBC micro:bit simulator (MicroPython interpreter) with tkinter canvas
 
 * tons of bugs fixed
 
+***
 
 ## Alpha 0.0.1
 
