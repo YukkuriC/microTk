@@ -1,4 +1,7 @@
-from ._base import *
-from ._image import *
+# root functions & classes
+from ._timebase import *
 from ._hardware import *
+from .display import Image, panic
 
+# display module
+from . import display

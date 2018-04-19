@@ -3,7 +3,7 @@ from turtle import Screen as _Screen
 _screen = _Screen()
 _tk = _screen._root
 
-__all__ = ['button_a', 'button_b','accelerometer']
+__all__ = ['button_a', 'button_b']
 
 
 # ============ button input ============
@@ -35,7 +35,3 @@ class _button:
 
 button_a = _button(1)  # left mouse button
 button_b = _button(3)  # right
-
-# ============ accelerometer ============
-class accelerometer:
-    pass
