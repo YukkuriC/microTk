@@ -1,28 +1,23 @@
-from turtle import Screen as _Screen
+__doc__ = '''Extend of microbit module
+simmulation of buttons with mouse
 
-_screen = _Screen()
-_tk = _screen._root
+Extension of microbit:
+- method
+-- microbit.temperature
+- object
+-- microbit.button_a
+-- microbit.button_b
+'''
+__all__ = ['button_a', 'button_b','temperature']
 
-__all__ = ['button_a', 'button_b']
 
-
-# ============ button input ============
+# button class (hook of display thread)
 class _button:
-    def _press(self, event):
-        self._button_down = True
-        self._count += 1
-
-    def _release(self, event):
-        self._button_down = False
-
     def __init__(self, bind):
         self._count = 0
         self._button_down = False
-        _tk.bind("<Button-%d>" % bind, self._press)
-        _tk.bind("<ButtonRelease-%d>" % bind, self._release)
 
     def is_pressed(self):
-        _tk.update()  # update tkinter for latest mouse status
         return self._button_down
 
     def was_pressed(self):
@@ -35,3 +30,8 @@ class _button:
 
 button_a = _button(1)  # left mouse button
 button_b = _button(3)  # right
+
+# temperature controlled by mouse wheel
+def temperature():
+    return temperature.temp
+temperature.temp=26
