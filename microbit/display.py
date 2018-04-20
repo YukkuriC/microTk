@@ -28,10 +28,12 @@ from ._screen import LED
 
 # ============ root content ============
 # error code
-def panic(error_code=None):
-    if error_code == None:
-        error_code = Image.SAD
-    show(error_code, loop=True)
+def panic(error_code=0):
+    while 1:
+        display.show(str(error_code))
+        sleep(400)
+        display.show(Image.SAD)
+        sleep(400)
 
 
 # Image class defination
@@ -47,13 +49,15 @@ class Image:
 
     # try to modify inner images
     def _inner_attempt_modify(self, *args, **kwargs):
-        panic()
+        raise AttributeError('read only')
 
     def __init__(self, *args):  # ._data format as lightness[x][y]
-        # empty 5x5
+        # empty read-only 5x5
         if len(args) == 0:
             self._width = self._height = 5
             self._data = [[0] * 5 for i in range(5)]
+            for fun in ['set_pixel', 'fill', 'blit']:
+                self.__setattr__(fun, Image._inner_attempt_modify)
 
         # from string
         elif len(args) == 1:  # from string
@@ -98,6 +102,7 @@ class Image:
         return new_image
 
     def set_pixel(self, x, y, value):
+        assert isinstance(value, int) and 0 <= value <= 9
         self._data[x][y] = value
 
     def get_pixel(self, x, y):
@@ -270,12 +275,6 @@ if 'static image':
 
 # ============ display module ============
 if 'display':
-
-    # background thread
-    # wait=False implement
-    # TODO
-    _display_thread = _Thread()
-
     # toggle screen on/off
     _is_on = True
 
@@ -284,8 +283,6 @@ if 'display':
 
     def off():
         _is_on = False
-        if _display_thread.is_alive():
-            _display_thread._stop()
         clear()
 
     is_on = lambda: _is_on
@@ -302,6 +299,8 @@ if 'display':
 
     # clear the screen
     def clear():
+        _stop_bg_run()
+
         for col in LED.pool:
             for led in col:
                 led.set_lightness(0)
@@ -309,6 +308,11 @@ if 'display':
     # display something on screen
     # distributed by input type
     def show(item, delay=None, **kwargs):  # wait=True, loop=False, clear=False
+        assert type(item) in [str, Image, tuple, list]
+
+        # stop background thread
+        _stop_bg_run()
+
         # make sure screen is on
         if not _is_on:
             return
@@ -318,75 +322,69 @@ if 'display':
         loop = kwargs.get('loop', False)
         clear = kwargs.get('clear', False)
 
-        # distribute by types
-        if isinstance(item, Image):
-            # small image
-            if item._width <= 5:
-                _show_image(item, delay or 0, loop)
+        # single-image display
+        if isinstance(item, Image) or isinstance(item, str) and len(item) == 1:
+            _show_image(item)
+            if loop and not wait:  # stop here
+                while 1:
+                    _sleep(1000)
 
-            # long image splitted into list
-            else:
-                list_cut = [
-                    item.crop(i, 0, 5, item._height)
-                    for i in range(0, item._width, 5)
-                ]
-                _show_sequence(list_cut, delay or 400, loop)
-        elif isinstance(item, list) or isinstance(item, tuple):
-            _show_sequence(item, delay or 400, loop)
-        elif isinstance(item, int) or isinstance(item, float) or isinstance(
-                item, str):
-            scroll(str(item), delay=delay or 150, **kwargs)
+        # show sequence in main thread
+        elif wait:
+            _show_sequence(item, delay or 400, loop, clear)
+
+        # show sequence in background
         else:
-            panic()
+            _run_bg(_show_sequence, item, delay or 400, loop, clear)
+
+    # show an image (first 5 columns)
+    def _show_image(item, delay=0):
+        # turn char into image
+        if isinstance(item, str):
+            item = _font.get(item, _font['?'])
+
+        # clear first
+        for col in LED.pool:
+            for led in col:
+                led.set_lightness(0)
+
+        # set all pixels
+        for x in range(min(5, item._width)):
+            for y in range(min(5, item._height)):
+                LED.pool[x][y].set_lightness(item._data[x][y])
+
+        # delay between frames
+        if delay:
+            _sleep(delay)
+
+    # show a sequence of iterables
+    def _show_sequence(lst, delay, loop, clear):
+        # enter loop for once/forever
+        while 1:
+            # show each item until meeting illegal
+            for item in lst:
+                if isinstance(
+                        item,
+                        Image) or isinstance(item, str) and len(item) == 1:
+                    _show_image(item, delay)
+                else:
+                    return
+
+            # if not loop, then break
+            if not loop:
+                break
 
         # clear if needed
         if clear:
             clear()
 
-    # show an image (first 5 columns)
-    def _show_image(item, delay, loop):
-        # enter loop for once/forever
-        while True:
-            # clear first
-            for col in LED.pool:
-                for led in col:
-                    led.set_lightness(0)
+    # scroll string
+    def scroll(string, delay=150, **kwargs):
+        # wait=True, loop=False, monospace=False
 
-            # set all pixels
-            for x in range(min(5, item._width)):
-                for y in range(min(5, item._height)):
-                    LED.pool[x][y].set_lightness(item._data[x][y])
+        # stop background thread
+        _stop_bg_run()
 
-            # delay between frames
-            if delay:
-                _sleep(delay)
-
-            # if not loop, then break
-            if not loop:
-                break
-
-    # show the character's font
-    def _show_char(string, delay, loop):
-        char_img = _font.get(string, _font['?'])
-        _show_image(char_img, delay, loop)
-
-    # show a sequence of iterables
-    def _show_sequence(lst, delay, loop):
-        # enter loop for once/forever
-        while 1:
-            # show each item
-            for item in lst:
-                if isinstance(item, Image):
-                    _show_image(item, delay, False)
-                elif isinstance(item, str):
-                    scroll(item, 150)
-
-            # if not loop, then break
-            if not loop:
-                break
-
-    def scroll(string, delay=150,
-               **kwargs):  # wait=True, loop=False, monospace=False
         # make sure screen is on
         if not _is_on:
             return
@@ -395,6 +393,11 @@ if 'display':
         wait = kwargs.get('wait', True)
         loop = kwargs.get('loop', False)
         monospace = kwargs.get('monospace', False)
+
+        # turn background if wait=False
+        if not wait:
+            kwargs['wait'] = False
+            return _run_bg(show, delay, kwargs)
 
         # display single character if len==1
         if len(string) == 1:
@@ -412,7 +415,7 @@ if 'display':
             # scroll string image
             while img_start._width:
                 # draw current image & delay
-                _show_image(img_start, delay, False)
+                _show_image(img_start, delay)
 
                 # scroll 1 block
                 img_start = img_start.shift_left(1)
@@ -420,6 +423,23 @@ if 'display':
             # break if not in loop
             if not loop:
                 break
+
+        # clear afterwards
+        clear()
+
+
+if 'background display':
+    _display_thread = _Thread()
+    _display_thread_id = None
+
+    def _stop_bg_run(id=None):
+        if not _display_thread.is_alive() or id == _display_thread_id:
+            return
+        _display_thread._stop()
+
+    def _run_bg(fun, lst, delay, loop, clear):
+        _display_thread = _Thread(target=fun, args=(lst, delay, loop, clear))
+        _display_thread.start()
 
 
 # ascii font before compiled into Image
