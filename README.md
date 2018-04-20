@@ -1,25 +1,47 @@
 # microTk
-BBC micro:bit simulator (MicroPython interpreter) with tkinter canvas
+[BBC micro:bit](https://microbit.org/) simulator ([MicroPython](http://python.microbit.org) interpreter) with tkinter canvas
 
+## Completed:
+
+* microbit root  
+_running_time, sleep  
+button_a, button_b (simulated with mouse buttons)  
+temperature (simulated with mouse wheel & middle button)_
+
+* microbit.Image  
+_everything_
+
+* microbit.display  
+_same as above_
 
 ## TODO:
-
-1. display
-> * implement of wait=False argument
-> * * a.k.a. multi-thread
-
-2. accelerometer
+2. accelerometer & compass
 
 3. music, audio, etc.
+
+4. more GUI
+
+5. setting menu at start-up
+
+5. inner [uFlash](https://uflash.readthedocs.io/en/latest/_modules/uflash.html) support
+
+***
+
+## Alpha 0.0.5
+### __Now I have a REAL micro:bit!__
+### Change log:
+* full operational 'display' module
+* disables float LED lightness and image input  
+_yes because __real__ ones don't_
+* minor alterations, bug fixes and 
+* more abundant README.md  \yay/
 
 ***
 
 ## Alpha 0.0.4
 ### Change log:
 * separate main widget into a standalone thread
-
 * simple '\_\_doc__' for codes
-
 * information bar (temporarily) at bottom
 
 ***
