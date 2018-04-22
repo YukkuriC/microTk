@@ -6,7 +6,8 @@
 * microbit root  
 _running_time, sleep  
 button_a, button_b (simulated with mouse buttons)  
-temperature (simulated with mouse wheel & middle button)_
+temperature (simulated with mouse wheel & middle button)
+pin0-19_
 
 * microbit.Image  
 _everything_
@@ -24,6 +25,24 @@ _same as above_
 5. setting menu at start-up
 
 5. inner [uFlash](https://uflash.readthedocs.io/en/latest/_modules/uflash.html) support
+
+***
+
+## Alpha 0.1.1
+### Change log:
+* support for pins
+    * read, write, etc.
+    * pressing P toggles pin information window
+* mouse hover to check LED status at leftbottom of screen
+
+***
+
+## Alpha 0.1.0
+### Change log: 
+* GUI
+* environment path redirect for music/audio import
+* button status now showed by GUI button
+* some code refactor
 
 ***
 
@@ -52,11 +71,11 @@ _yes because __real__ ones don't_
 * code structure refactor
 
 * display
-> * auto cut long image into list
-> * re-support float LED lightness
+    * auto cut long image into list
+    * re-support float LED lightness
 
 * image
-> * defination of \_\_sub__ operator
+    * defination of \_\_sub__ operator
 
 ***
 
@@ -64,15 +83,15 @@ _yes because __real__ ones don't_
 
 ### Change log:
 * display
-> * new appearance of LED screen
+    * new appearance of LED screen
 
 * Image
-> * Image.fill
-> * Image.invert
-> * Image.blit
-> * Image.crop
-> * Image + Image; Image * value
-> * constant images
+    * Image.fill
+    * Image.invert
+    * Image.blit
+    * Image.crop
+    * Image + Image; Image * value
+    * constant images
 
 * tons of bugs fixed
 
