@@ -24,6 +24,7 @@ __all__ = [
 from threading import Thread as _Thread
 from ._timebase import sleep as _sleep
 from ._screen import LED
+from ._hardware import _pin
 
 
 # ============ root content ============
@@ -202,8 +203,7 @@ class Image:
         return res
 
 
-# all static images
-if 'static image':
+if 'builtin images':
     Image.HEART = Image._inner_image('09090:99999:99999:09990:00900:')
     Image.HEART_SMALL = Image._inner_image('00000:09090:09990:00900:00000:')
     Image.HAPPY = Image._inner_image('00000:09090:00000:90009:09990:')
@@ -275,17 +275,15 @@ if 'static image':
 
 # ============ display module ============
 if 'display':
-    # toggle screen on/off
-    _is_on = True
 
     def on():
-        _is_on = True
+        _pin.screen_mode = True
 
     def off():
-        _is_on = False
+        _pin.screen_mode = False
         clear()
 
-    is_on = lambda: _is_on
+    is_on = lambda: _pin.screen_mode
 
     # get lightness level of certain pixel
     def get_pixel(x, y):
@@ -293,7 +291,7 @@ if 'display':
 
     # set lightness level of certain pixel
     def set_pixel(x, y, val):
-        if not _is_on:
+        if not _pin.screen_mode:
             return
         LED.pool[x][y].set_lightness(val)
 
@@ -314,7 +312,7 @@ if 'display':
         _stop_bg_run()
 
         # make sure screen is on
-        if not _is_on:
+        if not _pin.screen_mode:
             return
 
         # grab arguments
@@ -386,7 +384,7 @@ if 'display':
         _stop_bg_run()
 
         # make sure screen is on
-        if not _is_on:
+        if not _pin.screen_mode:
             return
 
         # grab arguments
@@ -430,9 +428,8 @@ if 'display':
 
 if 'background display':
     _display_thread = _Thread()
-    _display_thread_id = None
 
-    def _stop_bg_run(id=None):
+    def _stop_bg_run():
         if not _display_thread.is_alive() or id == _display_thread_id:
             return
         _display_thread._stop()
