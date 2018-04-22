@@ -28,20 +28,15 @@ _same as above_
 
 ***
 
-## Alpha 0.1.1
-### Change log:
+## Alpha 0.1.0
+### Change log: 
+* environment path redirect for music/audio import
+* GUI
+    * button status now showed by GUI button
+    * mouse hover to check LED status at leftbottom of screen
 * support for pins
     * read, write, etc.
     * pressing P toggles pin information window
-* mouse hover to check LED status at leftbottom of screen
-
-***
-
-## Alpha 0.1.0
-### Change log: 
-* GUI
-* environment path redirect for music/audio import
-* button status now showed by GUI button
 * some code refactor
 
 ***
