@@ -1,6 +1,6 @@
 from microbit import *
 from random import randint
-
+import music
 
 def SNAKE():
     # ============ GAME DATA ============
@@ -59,6 +59,7 @@ def SNAKE():
         # eat & regenerate point
         if SNAKE.pt == SNAKE.head:
             SNAKE.SCORE += 1
+            music.play(['G5:1','C6:1'],wait=False)
             # end gmae
             if SNAKE.SCORE == 25:
                 SNAKE.GAME_RUNNING = None
@@ -78,6 +79,7 @@ def SNAKE():
 
     # end game
     def gameover_screen():
+        music.play(music.POWER_DOWN,wait=False)
         update_frame(0)
         for i in range(2):
             display.set_pixel(SNAKE.head[0], SNAKE.head[1], 0)
@@ -92,6 +94,7 @@ def SNAKE():
         display.scroll('SCORE:%d' % SNAKE.SCORE)
 
     def clear_screen():
+        music.play(music.NYAN,wait=False)
         update_frame(0)
         while not (button_a.get_presses() or button_b.get_presses()):
             SNAKE.body.insert(0, SNAKE.head)
@@ -117,7 +120,6 @@ def SNAKE():
         clear_screen()
     else:
         gameover_screen()
-
 
 display.scroll('SNAKE', 75)
 while 1:
