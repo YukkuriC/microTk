@@ -16,15 +16,35 @@ _everything_
 _same as above_
 
 ## TODO:
-2. accelerometer & compass
+2. compass
 
-3. music, audio, etc.
+3. audio, etc.
 
 4. more GUI
 
 5. setting menu at start-up
 
 5. inner [uFlash](https://uflash.readthedocs.io/en/latest/_modules/uflash.html) support
+
+***
+
+## Alpha 0.2.0
+Call me __THREAD MASTER__ :(
+### Change log:
+* sub-window system separated from '_screen.py'
+* music system  
+    * playing and pitching
+    * support of switching between pins
+    * pressing B calls the beeper controller window
+* accelerometer system (numeric value part)
+    * getting acceleration value on XYZ axis
+    * pressing R calls a  window to control spatial rotation with mouse
+
+### Bug fixes
+* fixed background display system  
+    now restarting background thread won't cause exceptions
+* fixed improper import path redirect
+* fixed some misunderstanding about Image operation functions, and a following bug causing display.scroll to loop infinitely
 
 ***
 
