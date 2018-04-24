@@ -15,6 +15,14 @@ _everything_
 * microbit.display  
 _same as above_
 
+* microbit.accelerometer  
+_get xyz acceleration strength_
+
+* sub control panel  
+   * P: pin
+   * B: beeper
+   * R: rotation (for accelerometer)
+
 ## TODO:
 2. compass
 
