@@ -1,5 +1,7 @@
 __doc__ = '''Extend of microbit module
-simmulation of buttons with mouse
+simulation of buttons & temperature with mouse
+simulation of pins
+control of spatial micro:bit position
 
 Extension of microbit:
 - method
@@ -12,6 +14,10 @@ Extension of microbit:
 __all__ = ['button_a', 'button_b', 'temperature']
 __all__ += ['pin%d' % i for i in range(21) if not i in (17, 18)]
 
+from time import perf_counter
+from collections import deque
+from math import sin, cos
+
 
 # temperature controlled by mouse wheel
 def temperature():
@@ -21,7 +27,7 @@ def temperature():
 temperature.temp = 26
 
 
-# button class (hook of display thread)
+# ============ button class ============
 class _button:
     def __init__(self, bind):
         self._count = 0
@@ -42,10 +48,14 @@ button_a = _button(1)  # left mouse button
 button_b = _button(3)  # right
 
 
-# pins
+# ============ pin class ============
 class _pin:
     pins = [None] * 21  # all pins
     screen_mode = True  # whether LED screen is on
+
+    # music hook
+    tones = deque()  # format as (pin,freq,endperf_counter)
+    music_pin = None
 
     # update display color
     def _update_color(self, cv):
@@ -74,7 +84,8 @@ class _pin:
     def read_digital(self):
         self.__check_occupied()
         self.volt = 0
-        return self.volt_r > 0
+        return self.volt_r / 1023 * self.period_r >= (
+            perf_counter() * 1000000) % self.period_r
 
     def write_digital(self, value):
         self.__check_occupied()
@@ -90,7 +101,7 @@ class _pin:
         if (self.id > 4 and self.id != 10):
             raise AttributeError("digital pins don't support analog input")
         self.volt = 0
-        return self.volt_r > 0
+        return self.volt_r
 
     def write_analog(self, value):
         self.__check_occupied()
@@ -101,12 +112,12 @@ class _pin:
     def set_analog_period(self, period):
         self.__check_occupied()
         assert isinstance(period, int) and period >= 1
-        self.period_r = period * 1000
+        self.period = period * 1000
 
     def set_analog_period_microseconds(self, period):
         self.__check_occupied()
         assert isinstance(period, int) and period >= 256
-        self.period_r = period
+        self.period = period
 
     def is_touched(self):
         if self.id > 2:
@@ -118,3 +129,51 @@ class _pin:
 for i in range(21):
     if not i in (17, 18):
         exec('pin%d = _pin(i)' % i)
+
+_pin.music_pin = pin0
+
+
+# ============ spatial position ============
+class matrix3:
+    def __init__(self, *data):
+        '''data: matrix[row[num*3]*3]'''
+        self.data = data
+
+    def __add__(self, other):
+        return matrix3(
+            [[a + b for a, b in zip(i, j)] for i, j in zip(self, other)])
+
+    def __mul__(self, other):
+        if isinstance(other, list):
+            return [
+                sum(i * j for i, j in zip(row, other)) for row in self.data
+            ]
+        if isinstance(other, matrix3):
+            tmp = matrix3([0, 0, 0], [0, 0, 0], [0, 0, 0])
+            for row in range(3):
+                for col in range(3):
+                    tmp[row][col] = sum(
+                        float(self.data[row][i]) * float(other.data[i][col])
+                        for i in range(3))
+            return tmp
+
+    def __str__(self):
+        return '\n'.join(', '.join(map(str, row)) for row in self.data)
+
+    __repr__ = lambda self: 'matrix3(%s)' % self.data
+
+    def __getitem__(self, arg):
+        return self.data.__getitem__(arg)
+
+
+class spatial:
+    def_matrix = matrix3([1, 0, 0], [0, 1,0], [0, 0, 1])
+    r_matrix = def_matrix
+
+    @staticmethod
+    def rotatex(r):
+        return matrix3([1, 0, 0], [0, cos(r), sin(r)], [0, -sin(r), cos(r)])
+
+    @staticmethod
+    def rotatey(r):
+        return matrix3([cos(r), 0, -sin(r)], [0, 1, 0], [sin(r), 0, cos(r)])

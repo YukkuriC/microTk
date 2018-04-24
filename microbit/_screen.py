@@ -11,8 +11,9 @@ from tkinter import *
 from threading import Thread
 from os import _exit
 from sys import stdout, stderr
-from time import perf_counter
+from time import perf_counter, sleep
 from ._hardware import button_a, button_b, temperature, _pin
+from ._sub_window import *
 
 
 # simulated LED class
@@ -281,9 +282,13 @@ def bind_input_callback(tk, cv):
             # <KeyPress event state=Mod1 keysym=p keycode=80 char='p' x=464 y=282>
             # <KeyPress event state=Mod1 keysym=c keycode=67 char='c' x=464 y=282>
             # <KeyPress event state=Mod1 keysym=a keycode=65 char='a' x=464 y=282>
+            # <KeyPress event state=Mod1 keysym=b keycode=66 char='b' x=733 y=403>
+            # <KeyPress event state=Mod1 keysym=r keycode=82 char='r' x=453 y=274>
             print(event)
             event_pool = {
-                80: pin_info  # P calls pin information window
+                80: pin_info,  # P calls pin information window
+                66: beeper,  # B calls a beeper window playing sound
+                82: rotation,  # R calls spatial rotation window
             }
             if event.keycode in event_pool:
                 sub = event_pool[event.keycode]
@@ -300,7 +305,7 @@ def bind_input_callback(tk, cv):
         tk.bind('<KeyPress>', key_down)
 
 
-# ============ main display thread ============
+# ============ main screen thread ============
 def run_screen():
     try:
         # initialize tkinter window
@@ -366,72 +371,6 @@ def run_screen():
         _exit(0)
 
 
-# ============ sub-windows ============
-def pin_info():
-    info_width = 45
-
-    # init
-    sub = Tk()
-    sub.title('Pin Status')
-    sub.resizable(0, 0)
-    Label(sub, text='Name').grid(row=0, column=0)
-    Label(sub, text='-- Status --', width=info_width).grid(row=0, column=2)
-
-    # layout
-    curr_row = 1
-    rows = []
-    for i in range(len(_pin.pins)):
-        pin = _pin.pins[i]
-        if pin:
-            Label(sub, text='pin%d' % i).grid(row=curr_row, column=0)
-            Label(sub, text='|').grid(row=curr_row, column=1)
-            stat = Label(sub)
-            rows.append((pin, stat))
-            stat.grid(row=curr_row, column=2, sticky=W)
-            curr_row += 1
-
-    # mainloop
-    while 1:
-        for pin, stat in rows:
-            # occupied pins
-            if pin.id == 12:
-                stat.config(text='Reserved pin')
-            elif pin.id in (5, 11):
-                stat.config(text='Occupied by button %s' % 'AB' [pin.id == 11])
-            elif pin.id in (3, 4, 6, 7, 9, 10) and _pin.screen_mode:
-                stat.config(text='Occupied by LED screen')
-
-            # IO pins
-            else:
-                time_format = lambda x: '%d mus' % x if x < 1000 else '%s ms' % (x / 1000)
-                if pin.volt > 0:
-                    info = 'Output : '
-                    if pin.volt == 1023:
-                        info += 'ONE (digital)'
-                    else:
-                        info += '%d (analog); PWM cycle period: %s' % (
-                            pin.volt, time_format(pin.period))
-                elif pin.volt_r > 0:
-                    info = 'Input : '
-                    if pin.volt_r == 1023:
-                        info += 'ONE (digital)'
-                    else:
-                        info += '%d (analog); PWM cycle period: %s' % (
-                            pin.volt_r, time_format(pin.period_r))
-                else:
-                    info = 'Spare'
-
-                stat.config(text=info)
-
-        assert pin_info.running
-        sub.update()
-
-
-def music_player():
-    pass
-
-
-# ============ post import ============
 # initialize LED screen
 for x in range(5):
     for y in range(5):
@@ -440,3 +379,37 @@ for x in range(5):
 # run screen
 _screen_thread = Thread(target=run_screen)
 _screen_thread.start()
+
+# ============ beeper thread ============
+
+
+def run_beeper():
+    # load beeper
+    try:
+        from ctypes import windll
+        bp = windll.LoadLibrary('kernel32.dll')
+        beep = bp.Beep  # frequency, duration
+        # raise
+    except:
+        print('loading Windows beeper failed')
+
+        def beep(freq, dur):
+            print('beep %.1fHz for %dms' % (freq, dur))
+
+    while 1:
+        if _pin.tones:
+            tone = _pin.tones.pop()
+        else:
+            sleep(0.005)
+            continue
+        if tone[0] != _pin.music_pin:
+            continue
+
+        dur = int((tone[2] - perf_counter()) * 1000) - 30
+        if dur > 0:
+            beep(tone[1], dur)
+
+
+# run beeper
+_beeper_thread = Thread(target=run_beeper)
+_beeper_thread.start()

@@ -21,8 +21,8 @@ __all__ = [
     'on', 'off', 'is_on', 'get_pixel', 'set_pixel', 'clear', 'show', 'scroll'
 ]
 
-from threading import Thread as _Thread
-from ._timebase import sleep as _sleep
+from threading import Thread
+from ._timebase import sleep, _time
 from ._screen import LED
 from ._hardware import _pin
 
@@ -110,13 +110,16 @@ class Image:
         return self._data[x][y]
 
     def blit(self, src, x, y, w, h, xdest=0, ydest=0):
-        for cx in range(min(w, self._width - xdest)):
-            for cy in range(min(h, self._height - ydest)):
+        buffer = []
+        for cx in range(max(0, -xdest), min(w, self._width - xdest)):
+            for cy in range(max(0, -ydest), min(h, self._height - ydest)):
                 if 0 <= x + cx < src._width and 0 <= y + cy < src._height:
                     l = src._data[x + cx][y + cy]
                 else:
                     l = 0
-                self._data[xdest + cx][ydest + cy] = l
+                buffer.append((xdest + cx, ydest + cy, l))
+        for x, y, l in buffer:
+            self._data[x][y] = l
 
     def crop(self, x, y, w, h):
         new_img = Image(w, h)
@@ -124,35 +127,23 @@ class Image:
         return new_img
 
     def shift_left(self, n):
-        if n < 0:
-            return self.shift_right(-n)
-        new_image = Image(0, self._height)
-        new_image._data = [x.copy() for x in self._data[n:]]
-        new_image._width = max(self._width - n, 0)
+        new_image = Image(self._width, self._height)
+        new_image.blit(self, 0, 0, self._width, self._height, -n, 0)
         return new_image
 
     def shift_right(self, n):
-        if n < 0:
-            return self.shift_left(-n)
-        new_image = Image(0, self._height)
-        new_image._data = [x.copy() for x in self._data[:-n]]
-        new_image._width = max(self._width - n, 0)
+        new_image = Image(self._width, self._height)
+        new_image.blit(self, 0, 0, self._width, self._height, n, 0)
         return new_image
 
     def shift_up(self, n):
-        if n < 0:
-            return self.shift_down(-n)
-        new_image = Image(self._width, 0)
-        new_image._data = [x[n:] for x in self._data]
-        new_image._height = max(self._height - n, 0)
+        new_image = Image(self._width, self._height)
+        new_image.blit(self, 0, 0, self._width, self._height, 0, -n)
         return new_image
 
     def shift_down(self, n):
-        if n < 0:
-            return self.shift_up(-n)
-        new_image = Image(self._width, 0)
-        new_image._data = [x[:-n] for x in self._data]
-        new_image._height = max(self._height - n, 0)
+        new_image = Image(self._width, self._height)
+        new_image.blit(self, 0, 0, self._width, self._height, 0, n)
         return new_image
 
     def _join(self, other):  # on right
@@ -325,7 +316,7 @@ if 'display':
             _show_image(item)
             if loop and not wait:  # stop here
                 while 1:
-                    _sleep(1000)
+                    sleep(1000)
 
         # show sequence in main thread
         elif wait:
@@ -353,14 +344,19 @@ if 'display':
 
         # delay between frames
         if delay:
-            _sleep(delay)
+            sleep(delay)
 
     # show a sequence of iterables
-    def _show_sequence(lst, delay, loop, clear):
+    def _show_sequence(lst, delay, loop, clear, in_thread=False):
         # enter loop for once/forever
         while 1:
             # show each item until meeting illegal
             for item in lst:
+                # break if background thread ends
+                if in_thread and in_thread != _thread_running:
+                    return
+
+                # show image
                 if isinstance(
                         item,
                         Image) or isinstance(item, str) and len(item) == 1:
@@ -375,6 +371,49 @@ if 'display':
         # clear if needed
         if clear:
             clear()
+
+    # inner scroll a string
+    def _show_string(string, delay, wait, loop, monospace, in_thread=False):
+        # display single character if len==1
+        if len(string) == 1:
+            while 1:
+                # break if background thread ends
+                if in_thread and in_thread != _thread_running:
+                    return
+
+                # show char
+                _show_image(string, delay)
+
+                # break if not loop
+                if not loop:
+                    break
+
+        # generate long image
+        img_start = Image()
+        for i in string:
+            if not monospace:
+                img_start = img_start._join(Image(1, 5))
+            img_start = img_start._join(_font.get(i, _font['?']))
+
+        img_show = Image(5, 5)
+        # enter loop for once/forever
+        while 1:
+            # scroll string image
+            for i in range(img_start._width):
+                # break if background thread ends
+                if in_thread and in_thread != _thread_running:
+                    return
+
+                # draw current image & delay
+                img_show.blit(img_start, i, 0, 5, 5)
+                _show_image(img_show, delay)
+
+            # break if not in loop
+            if not loop:
+                break
+
+        # clear afterwards
+        clear()
 
     # scroll string
     def scroll(string, delay=150, **kwargs):
@@ -395,48 +434,23 @@ if 'display':
         # turn background if wait=False
         if not wait:
             kwargs['wait'] = False
-            return _run_bg(show, delay, kwargs)
+            return _run_bg(_show_string, string, delay, wait, loop, monospace)
 
-        # display single character if len==1
-        if len(string) == 1:
-            return _show_char(string, delay, loop)
-
-        # enter loop for once/forever
-        while 1:
-            # generate long image
-            img_start = Image()
-            for i in string:
-                if not monospace:
-                    img_start = img_start._join(Image(1, 5))
-                img_start = img_start._join(_font.get(i, _font['?']))
-
-            # scroll string image
-            while img_start._width:
-                # draw current image & delay
-                _show_image(img_start, delay)
-
-                # scroll 1 block
-                img_start = img_start.shift_left(1)
-
-            # break if not in loop
-            if not loop:
-                break
-
-        # clear afterwards
-        clear()
+        else:
+            _show_string(string, delay, wait, loop, monospace)
 
 
 if 'background display':
-    _display_thread = _Thread()
+    _thread_running = False
 
     def _stop_bg_run():
-        if not _display_thread.is_alive() or id == _display_thread_id:
-            return
-        _display_thread._stop()
+        global _thread_running
+        _thread_running = False
 
-    def _run_bg(fun, lst, delay, loop, clear):
-        _display_thread = _Thread(target=fun, args=(lst, delay, loop, clear))
-        _display_thread.start()
+    def _run_bg(fun, *args):
+        global _thread_running
+        _thread_running = _time()
+        Thread(target=fun, args=(*args, _thread_running)).start()
 
 
 # ascii font before compiled into Image
