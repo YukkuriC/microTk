@@ -284,11 +284,13 @@ def bind_input_callback(tk, cv):
             # <KeyPress event state=Mod1 keysym=a keycode=65 char='a' x=464 y=282>
             # <KeyPress event state=Mod1 keysym=b keycode=66 char='b' x=733 y=403>
             # <KeyPress event state=Mod1 keysym=r keycode=82 char='r' x=453 y=274>
+            # <KeyPress event state=Mod1 keysym=g keycode=71 char='g' x=387 y=435>
             print(event)
             event_pool = {
                 80: pin_info,  # P calls pin information window
                 66: beeper,  # B calls a beeper window playing sound
                 82: rotation,  # R calls spatial rotation window
+                71: gesture_info,  # G calls gesture window
             }
             if event.keycode in event_pool:
                 sub = event_pool[event.keycode]
@@ -405,7 +407,7 @@ def run_beeper():
         if tone[0] != _pin.music_pin:
             continue
 
-        dur = int((tone[2] - perf_counter()) * 1000) - 30
+        dur = int((tone[2] - perf_counter()) * 1000) - 5
         if dur > 0:
             beep(tone[1], dur)
 

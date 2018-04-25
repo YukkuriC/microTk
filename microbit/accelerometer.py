@@ -13,7 +13,7 @@ Containment:
 -- microbit.accelerometer.get_gestures
 '''
 
-from ._hardware import spatial
+from ._hardware import spatial, gesture
 
 if 'numeric value':
     _g = 1024
@@ -32,23 +32,20 @@ if 'numeric value':
 
 
 if 'gesture':
+
     def current_gesture():
-        pass
-
-    # .. note::
-
-    #     MicroPython understands the following gesture names: ``"up"``, ``"down"``,
-    #     ``"left"``, ``"right"``, ``"face up"``, ``"face down"``, ``"freefall"``,
-    #     ``"3g"``, ``"6g"``, ``"8g"``, ``"shake"``. Gestures are always
-    #     represented as strings.
+        return gesture.curr
 
     def is_gesture(name):
-        '''Return True or False to indicate if the named gesture is currently active.'''
+        return gesture.curr == name
 
     def was_gesture(name):
-        '''Return True or False to indicate if the named gesture was active since the
-        last call.'''
+        res = gesture.appeared[name]
+        for g in gesture.all:
+            gesture.appeared[g] = False
+        return res
 
     def get_gestures():
-        '''Return a tuple of the gesture history. The most recent is listed last.
-        Also clears the gesture history before returning.'''
+        res = tuple(gesture.sequence)
+        gesture.sequence = []
+        return res

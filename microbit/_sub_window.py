@@ -10,9 +10,9 @@ where func.running is controlled outside
 contains nothing accessible
 '''
 
-__all__ = ['pin_info', 'beeper', 'rotation']
+__all__ = ['pin_info', 'beeper', 'rotation', 'gesture_info']
 from tkinter import *
-from ._hardware import _pin, spatial
+from ._hardware import _pin, spatial, gesture
 
 
 # a 2-column table showing all accessible pins' status
@@ -92,7 +92,7 @@ def beeper():
     pin_group.pack(fill=X)
     Radiobutton(
         pin_group, variable=pin_select, text='none', value=-1).pack(side=LEFT)
-    for i in [0,1,2,8]:
+    for i in [0, 1, 2, 8]:
         Radiobutton(
             pin_group, variable=pin_select, text='pin%d' % i,
             value=i).pack(side=LEFT)
@@ -116,7 +116,8 @@ def rotation():
     cv.create_line(374, 20, 386, 32)
     cv.create_line(386, 20, 374, 32)
     cv.create_text(380, 10, text='gravity')
-    cv.create_text(400, 40, text='pointed\ninto screen',anchor=NE,justify=RIGHT)
+    cv.create_text(
+        400, 40, text='pointed\ninto screen', anchor=NE, justify=RIGHT)
 
     # initialize axis
     def get_axis_ends():
@@ -176,5 +177,73 @@ def rotation():
         cv.coords(body, *coords)
         cv.itemconfig(
             body, fill='gray' if spatial.r_matrix[2][2] < 0 else 'orange')
+
+        sub.update()
+
+def gesture_info():
+    # initialize tk
+    sub = Tk()
+    sub.title('Gesture control')
+    frame = Frame(sub)
+    frame.pack(fill=X)
+    Label(frame, text='Add gesture:').pack(side=LEFT)
+
+    # gesture buttons
+    def button_func(g):
+        def command():
+            if gesture.curr != g:
+                gesture.sequence.append(g)
+            gesture.curr = g
+            gesture.appeared[g] = True
+
+        return command
+
+    buttons = {}
+    for g_group in ("up", "down", "left", "right", "face up",
+                    "face down"), ("shake", "freefall", "3g", "6g", "8g"):
+        frame = Frame(sub)
+        frame.pack(fill=X)
+        for g in g_group:
+            button = Button(frame, text=g, command=button_func(g))
+            buttons[g] = button
+            button.pack(side=LEFT)
+
+    # clear button
+    def clear_gestures():
+        gesture.sequence = []
+        for g in gesture.all:
+            gesture.appeared[g] = False
+
+    frame = Frame(sub)
+    frame.pack(fill=X)
+    Label(frame, text='Gestures recorded:').pack(side=LEFT)
+    Button(frame, text='Clear', command=clear_gestures).pack()
+
+    # show gesture sequence
+    glist = Label(sub, justify=LEFT)
+    glist.pack(side=LEFT)
+    max_display = 15
+    display_content = ['aa'] * max_display
+
+    while 1:
+        # button color
+        for g in gesture.all:
+            buttons[g].config(bg='orange' if gesture.curr == g else '#66ccff'
+                              if gesture.appeared[g] else '#eeeeee')
+
+        # gesture list
+        gseq = gesture.sequence
+        if len(gseq) <= max_display:
+            for i in range(len(gseq)):
+                display_content[i] = '%d. %s' % (i + 1, gseq[i])
+            for i in range(len(gseq), len(display_content)):
+                display_content[i] = ''
+        else:
+            for i in range(max_display - 1):
+                display_content[i] = '%d. %s' % (i + 1, gseq[i])
+            display_content[max_display - 1] = '... %d more' % (
+                len(gseq) - max_display + 1)
+
+        glist.config(text='\n'.join(display_content))
 
         sub.update()

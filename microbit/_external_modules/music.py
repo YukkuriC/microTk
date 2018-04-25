@@ -130,6 +130,8 @@ if 'music':
         assert isinstance(duration, int) and duration >= -1
 
         _thread_running[pin] = False
+        if frequency <= 0:
+            return
         if wait:
             _pitch(frequency, duration, pin)
         else:

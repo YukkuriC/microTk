@@ -133,7 +133,7 @@ for i in range(21):
 _pin.music_pin = pin0
 
 
-# ============ spatial position ============
+# ============ accelerometer control ============
 class matrix3:
     def __init__(self, *data):
         '''data: matrix[row[num*3]*3]'''
@@ -167,7 +167,7 @@ class matrix3:
 
 
 class spatial:
-    def_matrix = matrix3([1, 0, 0], [0, 1,0], [0, 0, 1])
+    def_matrix = matrix3([1, 0, 0], [0, 1, 0], [0, 0, 1])
     r_matrix = def_matrix
 
     @staticmethod
@@ -177,3 +177,15 @@ class spatial:
     @staticmethod
     def rotatey(r):
         return matrix3([cos(r), 0, -sin(r)], [0, 1, 0], [sin(r), 0, cos(r)])
+
+
+class gesture:
+    all = ("up", "down", "left", "right", "face up", "face down", "freefall",
+           "3g", "6g", "8g", "shake")
+    appeared = dict(zip(all, [False] * len(all)))
+    sequence = ["face up"]
+    curr = "face up"
+    appeared["face up"] = True
+
+
+# ============ compass control ============
