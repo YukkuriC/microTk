@@ -15,13 +15,16 @@ _everything_
 * microbit.display  
 _same as above_
 
-* microbit.accelerometer  
-_get xyz acceleration strength_
+* microbit.accelerometer  
+_everything...I guess  
+value part and gesture part are saparate,   
+controlled by different window_
 
 * sub control panel  
    * P: pin
    * B: beeper
    * R: rotation (for accelerometer)
+   * G: gesture (for accelerometer)
 
 ## TODO:
 2. compass
@@ -36,10 +39,21 @@ _get xyz acceleration strength_
 
 ***
 
+## Beta 1.0
+Test it out!
+### Change log:
+* gesture part of accelerometer  
+_yes it's done_
+
+### Bug fixes:
+* removes the ValueError bug when __music.pitch__ gets a frequency 0
+
+***
+
 ## Alpha 0.2.0
 Call me __THREAD MASTER__ :(
 ### Change log:
-* sub-window system separated from '_screen.py'
+* sub-window system separated from __\_screen.py__
 * music system  
     * playing and pitching
     * support of switching between pins
@@ -48,7 +62,7 @@ Call me __THREAD MASTER__ :(
     * getting acceleration value on XYZ axis
     * pressing R calls a  window to control spatial rotation with mouse
 
-### Bug fixes
+### Bug fixes:
 * fixed background display system  
     now restarting background thread won't cause exceptions
 * fixed improper import path redirect
@@ -72,7 +86,7 @@ Call me __THREAD MASTER__ :(
 ## Alpha 0.0.5
 ### __Now I have a REAL micro:bit!__
 ### Change log:
-* full operational 'display' module
+* full operational __display__ module
 * disables float LED lightness and image input  
 _yes because __real__ ones don't_
 * minor alterations, bug fixes and 
@@ -83,7 +97,7 @@ _yes because __real__ ones don't_
 ## Alpha 0.0.4
 ### Change log:
 * separate main widget into a standalone thread
-* simple '\_\_doc__' for codes
+* simple __\_\_doc____ for codes
 * information bar (temporarily) at bottom
 
 ***
@@ -98,7 +112,7 @@ _yes because __real__ ones don't_
     * re-support float LED lightness
 
 * image
-    * defination of \_\_sub__ operator
+    * defination of __\_\_sub____ operator
 
 ***
 
@@ -125,4 +139,4 @@ _yes because __real__ ones don't_
 ### Completed:
 * basic Image operations
 * basic display module
-* button_a & button_b input implement with mouse click
+* __button_a__ & __button_b__ input implement with mouse click
