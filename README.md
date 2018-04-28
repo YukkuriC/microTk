@@ -20,22 +20,33 @@ _everything...I guess
 value part and gesture part are saparate,   
 controlled by different window_
 
+* microbit.compass  
+_without calibration minigame  
+might do it later
+magnetic field controlled by sub-window_
+
 * sub control panel  
    * P: pin
    * B: beeper
    * R: rotation (for accelerometer)
    * G: gesture (for accelerometer)
+   * C: magnetic field direction (for compass)
 
 ## TODO:
-2. compass
-
 3. audio, etc.
-
-4. more GUI
 
 5. setting menu at start-up
 
 5. inner [uFlash](https://uflash.readthedocs.io/en/latest/_modules/uflash.html) support
+
+***
+
+## Gamma 1.0
+### Change log:
+* __compass__ module
+* some optimization about spatial control sub-window
+* unusual version code
+    * _I guess there's not much time_
 
 ***
 
