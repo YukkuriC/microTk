@@ -10,9 +10,10 @@ where func.running is controlled outside
 contains nothing accessible
 '''
 
-__all__ = ['pin_info', 'beeper', 'rotation', 'gesture_info']
+__all__ = ['pin_info', 'beeper', 'rotation', 'gesture_info', 'compass_control']
 from tkinter import *
-from ._hardware import _pin, spatial, gesture
+from ._hardware import _pin, spatial, gesture, magnetic
+from math import cos, sin, atan2
 
 
 # a 2-column table showing all accessible pins' status
@@ -156,10 +157,6 @@ def rotation():
         y = e.y - sub.winfo_height() / 2
         spatial.r_matrix = spatial.rotatey(x * 0.01) * spatial.rotatex(
             -y * 0.01) * spatial.def_matrix
-
-    cv.bind('<B1-Motion>', drag_event)
-
-    while 1:
         # update axis
         axis_ends = tuple(get_axis_ends())
         for i in range(3):
@@ -178,7 +175,9 @@ def rotation():
         cv.itemconfig(
             body, fill='gray' if spatial.r_matrix[2][2] < 0 else 'orange')
 
-        sub.update()
+    cv.bind('<B1-Motion>', drag_event)
+    sub.mainloop()
+
 
 def gesture_info():
     # initialize tk
@@ -245,5 +244,63 @@ def gesture_info():
                 len(gseq) - max_display + 1)
 
         glist.config(text='\n'.join(display_content))
+
+        sub.update()
+
+
+def compass_control():
+    sub = Tk()
+    sub.title('Magnetic field direction')
+    cv = Canvas(sub, width=400, height=400, bg='#66ccff')
+    cv.pack()
+
+    # draw body
+    def get_point_pos(px, py):
+        x, y, z = (px * spatial.r_matrix[0][i] + py * spatial.r_matrix[1][i]
+                   for i in range(3))
+        resize = 300 / (300 - z)
+        return body_origin[0] + x * resize, body_origin[1] + y * resize
+
+    body_origin = (200, 200)
+    body_w, body_h = 50, 40
+    body_sketch = ((-body_w, -body_h), (body_w, -body_h), (body_w, body_h),
+                   (-body_w, body_h))
+    body = cv.create_polygon(
+        *(get_point_pos(px, py) for px, py in body_sketch),
+        outline='black',
+        fill='gray' if spatial.r_matrix[2][2] < 0 else 'orange')
+
+    # draw magnetic field
+    def get_mag_pos(x, y):
+        return 200 + x * cos(magnetic.direction) - y * sin(magnetic.direction),\
+                200 + x * sin(magnetic.direction) + y * cos(magnetic.direction)
+
+    a, b, c, d = 70, 85, 10, 65
+    arrow_sketch = ((a, 0), (d, -c), (b, 0), (d, c))
+    mag_arrow = cv.create_polygon(
+        *[get_mag_pos(x, y) for x, y in arrow_sketch], fill='black')
+
+    # control magnetic field angle
+    def drag_event(e):
+        x = e.x - sub.winfo_width() / 2
+        y = e.y - sub.winfo_height() / 2
+        magnetic.direction = atan2(y, x)
+        magnetic.str_x = magnetic.strength * cos(magnetic.direction)
+        magnetic.str_y = magnetic.strength * sin(magnetic.direction)
+        coords = []
+        for pt in arrow_sketch:
+            coords.extend(get_mag_pos(*pt))
+        cv.coords(mag_arrow, *coords)
+
+    cv.bind('<B1-Motion>', drag_event)
+
+    while 1:
+        # update body
+        coords = []
+        for pt in body_sketch:
+            coords.extend(get_point_pos(*pt))
+        cv.coords(body, *coords)
+        cv.itemconfig(
+            body, fill='gray' if spatial.r_matrix[2][2] < 0 else 'orange')
 
         sub.update()

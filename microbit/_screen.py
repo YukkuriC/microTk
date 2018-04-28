@@ -291,6 +291,7 @@ def bind_input_callback(tk, cv):
                 66: beeper,  # B calls a beeper window playing sound
                 82: rotation,  # R calls spatial rotation window
                 71: gesture_info,  # G calls gesture window
+                67: compass_control  # C calls magnetic field direction window
             }
             if event.keycode in event_pool:
                 sub = event_pool[event.keycode]
@@ -407,7 +408,7 @@ def run_beeper():
         if tone[0] != _pin.music_pin:
             continue
 
-        dur = int((tone[2] - perf_counter()) * 1000) - 5
+        dur = int((tone[2] - perf_counter()) * 1000) - 30
         if dur > 0:
             beep(tone[1], dur)
 

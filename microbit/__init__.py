@@ -20,9 +20,10 @@ from .display import Image, panic
 from ._timebase import *
 from ._hardware import *
 
-# display module
+# sub modules
 from . import display
 from . import accelerometer
+from . import compass
 
 # add links
 from os.path import abspath, split
@@ -34,7 +35,7 @@ path.append(pkg_path)  # make 'music' an importable module
 path.append(split(curr_path)[0])  # make this an importable package
 
 __all__ = [
-    'display', 'accelerometer', 'Image', 'button_a', 'button_b', 'panic',
+    'display', 'accelerometer','compass', 'Image', 'button_a', 'button_b', 'panic',
     'pin0', 'pin1', 'pin2', 'pin3', 'pin4', 'pin5', 'pin6', 'pin7', 'pin8',
     'pin9', 'pin10', 'pin11', 'pin12', 'pin13', 'pin14', 'pin15', 'pin16',
     'pin19', 'pin20', 'running_time', 'sleep', 'temperature'

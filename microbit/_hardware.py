@@ -189,3 +189,8 @@ class gesture:
 
 
 # ============ compass control ============
+class magnetic:
+    strength = 25000
+    direction = -1.5708
+    str_x = strength * cos(direction)
+    str_y = strength * sin(direction)
