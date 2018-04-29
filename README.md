@@ -33,11 +33,16 @@ magnetic field controlled by sub-window_
    * C: magnetic field direction (for compass)
 
 ## TODO:
-3. audio, etc.
+_maybe not_
 
-5. setting menu at start-up
+***
 
-5. inner [uFlash](https://uflash.readthedocs.io/en/latest/_modules/uflash.html) support
+## Delta 1.0
+### Change log:
+* disables printing events when pressing keyboard
+
+### Bug fixes
+* missed hook for several sub-windows added
 
 ***
 
