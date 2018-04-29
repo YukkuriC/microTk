@@ -255,6 +255,7 @@ def bind_input_callback(tk, cv):
         # control buttons
         def bt_down(button):
             button._button_down = True
+            button._pressed = True
             button._count += 1
             cv.itemconfig(button._cv, fill='yellow')
 

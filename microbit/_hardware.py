@@ -32,12 +32,14 @@ class _button:
     def __init__(self, bind):
         self._count = 0
         self._button_down = False
+        self._pressed = False
 
     def is_pressed(self):
         return self._button_down
 
     def was_pressed(self):
-        return self._count > 0
+        res, self._pressed = self._pressed, False
+        return res
 
     def get_presses(self):
         res, self._count = self._count, 0

@@ -176,7 +176,9 @@ def rotation():
             body, fill='gray' if spatial.r_matrix[2][2] < 0 else 'orange')
 
     cv.bind('<B1-Motion>', drag_event)
-    sub.mainloop()
+    while 1:
+        assert rotation.running
+        sub.update()
 
 
 def gesture_info():
@@ -225,6 +227,8 @@ def gesture_info():
     display_content = ['aa'] * max_display
 
     while 1:
+        assert gesture_info.running
+
         # button color
         for g in gesture.all:
             buttons[g].config(bg='orange' if gesture.curr == g else '#66ccff'
@@ -295,6 +299,8 @@ def compass_control():
     cv.bind('<B1-Motion>', drag_event)
 
     while 1:
+        assert compass_control.running
+        
         # update body
         coords = []
         for pt in body_sketch:

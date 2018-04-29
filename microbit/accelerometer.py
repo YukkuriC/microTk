@@ -43,6 +43,7 @@ if 'gesture':
         res = gesture.appeared[name]
         for g in gesture.all:
             gesture.appeared[g] = False
+        gesture.curr = "face up"
         return res
 
     def get_gestures():
