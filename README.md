@@ -37,6 +37,12 @@ _maybe not_
 
 ***
 
+## Epsilon 1.0
+### Bug fixes
+* fixed a logical bug in __music__ and __display__, which causes unusual performance when providing empty lists into background thread.
+
+***
+
 ## Delta 1.0
 ### Change log:
 * disables printing events when pressing keyboard
