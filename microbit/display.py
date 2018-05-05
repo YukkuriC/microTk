@@ -348,6 +348,9 @@ if 'display':
 
     # show a sequence of iterables
     def _show_sequence(lst, delay, loop, clear, in_thread=False):
+        if not lst:
+            return
+
         # enter loop for once/forever
         while 1:
             # show each item until meeting illegal
