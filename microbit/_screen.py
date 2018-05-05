@@ -280,13 +280,6 @@ def bind_input_callback(tk, cv):
     if 'keyboard':
 
         def key_down(event):
-            # <KeyPress event state=Mod1 keysym=p keycode=80 char='p' x=464 y=282>
-            # <KeyPress event state=Mod1 keysym=c keycode=67 char='c' x=464 y=282>
-            # <KeyPress event state=Mod1 keysym=a keycode=65 char='a' x=464 y=282>
-            # <KeyPress event state=Mod1 keysym=b keycode=66 char='b' x=733 y=403>
-            # <KeyPress event state=Mod1 keysym=r keycode=82 char='r' x=453 y=274>
-            # <KeyPress event state=Mod1 keysym=g keycode=71 char='g' x=387 y=435>
-            print(event)
             event_pool = {
                 80: pin_info,  # P calls pin information window
                 66: beeper,  # B calls a beeper window playing sound
