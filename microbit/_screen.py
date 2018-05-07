@@ -10,7 +10,6 @@ Containment:
 from tkinter import *
 from threading import Thread
 from os import _exit
-from sys import stdout, stderr
 from time import perf_counter, sleep
 from ._hardware import button_a, button_b, temperature, _pin
 from ._sub_window import *
