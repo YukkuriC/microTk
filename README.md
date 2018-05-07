@@ -37,6 +37,12 @@ _maybe not_
 
 ***
 
+## Zeta 1.0
+### Bug fixes
+* music module now receives notes with lower-letter names
+
+***
+
 ## Epsilon 1.0
 ### Bug fixes
 * fixed a logical bug in __music__ and __display__, which causes unusual performance when providing empty lists into background thread.
