@@ -35,6 +35,9 @@ if 'music':
     }
 
     def _parse_music_note(note, pin, curr_octave, curr_duration):
+        # capitalize note name
+        note = note.capitalize()
+        
         try:
             tmp = note.split(':')
             assert len(tmp) in (1, 2)
@@ -75,6 +78,9 @@ if 'music':
 
     # read note sequence
     def _parse_music_seq(music, pin, loop, in_thread=False):
+        if not music:
+            return
+
         # enter loop once/forever
         while 1:
             # play
