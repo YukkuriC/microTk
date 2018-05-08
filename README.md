@@ -37,7 +37,7 @@ _maybe not_
 
 ***
 
-## Epsilon 1.1
+## Epsilon 1.2
 ### Change log
 * merges version code
 
@@ -45,6 +45,7 @@ _maybe not_
 * fixed a logical bug in __music__ and __display__, which causes unusual performance when providing empty lists into background thread.
 * music module now receives notes with lower-letter names
 * removes unnecessary import of sys in __\_screen__
+* fixed a bug treating rest note improperly in __music__
 
 ***
 
