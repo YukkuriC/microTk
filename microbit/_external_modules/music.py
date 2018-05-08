@@ -35,9 +35,7 @@ if 'music':
     }
 
     def _parse_music_note(note, pin, curr_octave, curr_duration):
-        # capitalize note name
-        note = note.capitalize()
-        
+        print(note)
         try:
             tmp = note.split(':')
             assert len(tmp) in (1, 2)
@@ -54,9 +52,11 @@ if 'music':
 
             # parse frequency
             assert len(tmp) <= 2
+            tmp = tmp.capitalize()
             if tmp == 'R':  # rest
                 pin.volt = 0
-                _sleep(_tick_l * curr_duration)
+                _sleep(_tick_l * curr_duration * 0.001)
+                return curr_octave, curr_duration
             elif 'A' <= tmp[0] <= 'G':  # note
                 offset = _note_offset[tmp[0]]
                 if len(tmp) == 2:
