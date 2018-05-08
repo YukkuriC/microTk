@@ -35,7 +35,6 @@ if 'music':
     }
 
     def _parse_music_note(note, pin, curr_octave, curr_duration):
-        print(note)
         try:
             tmp = note.split(':')
             assert len(tmp) in (1, 2)
